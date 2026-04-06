@@ -1222,7 +1222,16 @@
   <p class="footer-copy">&copy; 2026 EasyCall AI. All rights reserved</p>
 </footer>
 
-<script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  // ── Supabase client ─────────────────────────────────────────────────
+  const supabase = createClient(
+    'https://qdgvaypmwtnlcfdyjjgk.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkZ3ZheXBtd3RubGNmZHlqamdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjYyNDcsImV4cCI6MjA4NTgwMjI0N30.4DChuhf_kf2C9smi9d4VACjWVP3MX-zcwypqvc-dXAw'
+  );
+
+  // ── Ops tab switching ───────────────────────────────────────────────
   document.querySelectorAll('.ops-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.tab;
@@ -1232,6 +1241,64 @@
       document.getElementById('panel-' + target).classList.add('active');
     });
   });
+
+  // ── Scroll-to-form for all non-hero Book Demo buttons ───────────────
+  document.querySelectorAll('.btn-book-lg, .btn-book-cta, .btn-demo-nav').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => document.getElementById('firstname').focus(), 500);
+    });
+  });
+
+  // ── Hero form submission ────────────────────────────────────────────
+  const submitBtn = document.querySelector('.btn-book');
+
+  submitBtn.addEventListener('click', async () => {
+    const first_name   = document.getElementById('firstname').value.trim();
+    const last_name    = document.getElementById('lastname').value.trim();
+    const company_name = document.getElementById('company').value.trim();
+    const email        = document.getElementById('email').value.trim();
+    const phone        = document.getElementById('phone').value.trim();
+    const units_managed = document.getElementById('units').value;
+
+    if (!first_name || !last_name || !company_name || !email || !phone || !units_managed) {
+      showFormMsg('Please fill in all fields.', 'error');
+      return;
+    }
+
+    submitBtn.textContent = 'Submitting…';
+    submitBtn.disabled = true;
+
+    const { error } = await supabase
+      .from('demo_requests')
+      .insert([{ first_name, last_name, company_name, email, phone, units_managed }]);
+
+    if (error) {
+      console.error(error);
+      showFormMsg('Something went wrong — please try again.', 'error');
+      submitBtn.textContent = 'Book Demo';
+      submitBtn.disabled = false;
+    } else {
+      submitBtn.textContent = '✓ Request Sent!';
+      submitBtn.style.background = '#10b981';
+      showFormMsg('Thanks! We\'ll be in touch shortly.', 'success');
+      ['firstname','lastname','company','email','phone'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('units').value = '';
+    }
+  });
+
+  function showFormMsg(msg, type) {
+    let el = document.getElementById('form-msg');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'form-msg';
+      el.style.cssText = 'font-size:13px;font-weight:600;text-align:center;margin-top:10px;border-radius:6px;padding:8px 12px;';
+      submitBtn.insertAdjacentElement('afterend', el);
+    }
+    el.textContent = msg;
+    el.style.color        = type === 'success' ? '#065f46' : '#991b1b';
+    el.style.background   = type === 'success' ? '#d1fae5'  : '#fee2e2';
+  }
 </script>
 </body>
 </html>
